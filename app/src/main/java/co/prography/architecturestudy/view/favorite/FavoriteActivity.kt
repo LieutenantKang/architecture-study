@@ -1,56 +1,36 @@
-package co.prography.architecturestudy.view
+package co.prography.architecturestudy.view.favorite
 
-import android.os.AsyncTask
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import co.prography.architecturestudy.R
+import co.prography.architecturestudy.base.BaseActivity
 import co.prography.architecturestudy.data.room.City
-import co.prography.architecturestudy.data.room.CityDao
-import co.prography.architecturestudy.data.room.CityDatabase
 import kotlinx.android.synthetic.main.card_favorite.view.*
 
-class FavoriteActivity : AppCompatActivity() {
-    companion object {
-        lateinit var favoriteCityDao: CityDao
-    }
+class FavoriteActivity : BaseActivity(), FavoriteContract.View {
+    override val layoutRes: Int
+        get() = R.layout.activity_favorite
 
-    private lateinit var cityDatabase: CityDatabase
+    override lateinit var presenter: FavoriteContract.Presenter
 
     private val recyclerView by lazy {
         findViewById<RecyclerView>(R.id.favorite_recycler_view)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_favorite)
-
-        cityDatabase = CityDatabase.getInstance(this)
-        favoriteCityDao = cityDatabase.cityDao
+    override fun initView() {
+        presenter = FavoritePresenter(this@FavoriteActivity, this)
+        presenter.start()
 
         val recyclerViewAdapter = CityAdapter()
         recyclerView.adapter = recyclerViewAdapter
 
-        RecyclerViewUpdater(recyclerViewAdapter, favoriteCityDao).execute()
+        presenter.initRecyclerViewData(recyclerViewAdapter)
     }
 
-    class RecyclerViewUpdater(private val adapter: CityAdapter, private val cityDao: CityDao) :
-        AsyncTask<Void, Void, String>() {
-        override fun doInBackground(vararg p0: Void?): String {
-            adapter.setItem(cityDao.getFavoriteCities())
-            return ""
-        }
-
-        override fun onPostExecute(result: String?) {
-            super.onPostExecute(result)
-            adapter.notifyDataSetChanged()
-        }
-    }
-
+    override fun isViewActive(): Boolean = checkActive()
 
     class CityAdapter : RecyclerView.Adapter<CityAdapter.ViewHolder>() {
         private var cityList = listOf<City>()

@@ -5,18 +5,20 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [City::class], version=2, exportSchema = false)
+@Database(entities = [City::class], version = 2, exportSchema = false)
 abstract class CityDatabase : RoomDatabase() {
-    abstract val cityDao : CityDao
+    abstract val cityDao: CityDao
 
-    companion object{
+    companion object {
         private var instance: CityDatabase? = null
 
         @Synchronized
-        fun getInstance(context: Context) : CityDatabase{
-            if(instance == null){
-                instance = Room.databaseBuilder(context.applicationContext,
-                    CityDatabase::class.java, "city.db")
+        fun getInstance(context: Context): CityDatabase {
+            if (instance == null) {
+                instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    CityDatabase::class.java, "city.db"
+                )
                     .fallbackToDestructiveMigration().build()
             }
             return instance as CityDatabase

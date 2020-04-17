@@ -7,6 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitGenerator {
     private val builder = OkHttpClient.Builder()
+
     init {
         val httpLoggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -14,6 +15,7 @@ object RetrofitGenerator {
 
         builder.addInterceptor(httpLoggingInterceptor)
     }
+
     private val okHttpClient = builder.build()
 
     private val retrofit =
@@ -22,5 +24,6 @@ object RetrofitGenerator {
             .baseUrl("https://progserver.herokuapp.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+
     fun create(): RetrofitService = retrofit.create(RetrofitService::class.java)
 }

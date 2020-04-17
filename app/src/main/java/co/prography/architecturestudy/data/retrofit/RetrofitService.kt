@@ -6,5 +6,5 @@ import retrofit2.http.GET
 
 interface RetrofitService {
     @GET("/api/cities")
-    fun getCities() : Call<CityResponse>
+    fun getCities(): Call<CityResponse>
 }
