@@ -1,5 +1,7 @@
 package co.prography.architecturestudy.view
 
+import android.content.Intent
+import android.graphics.Color
 import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,14 +17,19 @@ import co.prography.architecturestudy.data.retrofit.RetrofitGenerator
 import co.prography.architecturestudy.data.room.City
 import co.prography.architecturestudy.data.room.CityDao
 import co.prography.architecturestudy.data.room.CityDatabase
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.card_city.view.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-    lateinit var cityDatabase: CityDatabase
-    lateinit var cityDao: CityDao
+    companion object {
+        lateinit var cityDao: CityDao
+    }
+
+    private lateinit var cityDatabase: CityDatabase
+
     private val recyclerView by lazy{
         findViewById<RecyclerView>(R.id.main_recycler_view)
     }
@@ -40,11 +47,15 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = recyclerViewAdapter
 
         RecyclerViewUpdater(recyclerViewAdapter, cityDao).execute()
+
+        main_intent_button.setOnClickListener {
+            startActivity(Intent(this@MainActivity, FavoriteActivity::class.java))
+        }
     }
 
     class RecyclerViewUpdater(private val adapter: CityAdapter, private val cityDao: CityDao) : AsyncTask<Void, Void, String>(){
         override fun doInBackground(vararg p0: Void?): String {
-            adapter.setItem(cityDao.getCities() as ArrayList<City>)
+            adapter.setItem(cityDao.getCities())
             return ""
         }
 
@@ -67,7 +78,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     class CityAdapter: RecyclerView.Adapter<CityAdapter.ViewHolder>(){
-        private lateinit var cityList : ArrayList<City>
+        private var cityList = listOf<City>()
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.card_city,parent,false)
@@ -78,15 +89,28 @@ class MainActivity : AppCompatActivity() {
             val city = cityList[position]
             with(holder){
                 cityName.text = cityList[position].city
+                if(city.favorite){
+                    favoriteButton.setBackgroundResource(R.drawable.ic_favorite_pink_24dp)
+                }else{
+                    favoriteButton.setBackgroundResource(R.drawable.ic_favorite_border_pink_24dp)
+                }
             }
             holder.favoriteButton.setOnClickListener{
-                // favorite edit
+                city.favorite = !city.favorite
+                notifyDataSetChanged()
+                Thread{
+                    if(city.favorite){
+                        cityDao.updateFavoriteCity(city.city!!, 1)
+                    }else{
+                        cityDao.updateFavoriteCity(city.city!!, 0)
+                    }
+                }.start()
             }
         }
 
         override fun getItemCount(): Int = cityList.size
 
-        fun setItem(cityList: ArrayList<City>){
+        fun setItem(cityList: List<City>){
             this.cityList = cityList
         }
 
