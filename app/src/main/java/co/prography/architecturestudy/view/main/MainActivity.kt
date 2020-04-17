@@ -1,41 +1,54 @@
 package co.prography.architecturestudy.view.main
 
 import android.content.Intent
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
 import co.prography.architecturestudy.R
-import co.prography.architecturestudy.base.BaseActivity
 import co.prography.architecturestudy.data.room.City
 import co.prography.architecturestudy.view.favorite.FavoriteActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.card_city.view.*
 
-class MainActivity : BaseActivity(), MainContract.View, View.OnClickListener {
-    override val layoutRes: Int
-        get() = R.layout.activity_main
+class MainActivity : AppCompatActivity(), View.OnClickListener {
 
-    override lateinit var presenter: MainContract.Presenter
+    private lateinit var mainViewModel: MainViewModel
 
     private val recyclerView by lazy {
         findViewById<RecyclerView>(R.id.main_recycler_view)
     }
 
-    override fun initView() {
-        presenter = MainPresenter(this@MainActivity, this)
-        presenter.start()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val adapter = CityAdapter { city -> updateFavorite(city) }
+
+        recyclerView.adapter = adapter
+
+        mainViewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        mainViewModel.fetchData()
+
+        mainViewModel.getCities().observe(this, Observer<List<City>> { cities ->
+            adapter.setItem(cities)
+        })
 
         main_intent_button.setOnClickListener(this)
+    }
 
-        presenter.fetchData()
-
-        val recyclerViewAdapter = CityAdapter(presenter)
-        recyclerView.adapter = recyclerViewAdapter
-
-        presenter.initRecyclerViewData(recyclerViewAdapter)
+    private fun updateFavorite(city: City) {
+        if (city.favorite) {
+            mainViewModel.updateFavorite(city.city!!, 0)
+        } else {
+            mainViewModel.updateFavorite(city.city!!, 1)
+        }
     }
 
     override fun onClick(v: View) {
@@ -45,9 +58,7 @@ class MainActivity : BaseActivity(), MainContract.View, View.OnClickListener {
         }
     }
 
-    override fun isViewActive(): Boolean = checkActive()
-
-    class CityAdapter(private val presenter: MainContract.Presenter) :
+    class CityAdapter(val favoriteButtonClick: (City) -> Unit) :
         RecyclerView.Adapter<CityAdapter.ViewHolder>() {
         private var cityList = listOf<City>()
 
@@ -68,15 +79,7 @@ class MainActivity : BaseActivity(), MainContract.View, View.OnClickListener {
                 }
             }
             holder.favoriteButton.setOnClickListener {
-                city.favorite = !city.favorite
-                notifyDataSetChanged()
-                Thread {
-                    if (city.favorite) {
-                        presenter.updateFavorite(city.city!!, 1)
-                    } else {
-                        presenter.updateFavorite(city.city!!, 0)
-                    }
-                }.start()
+                favoriteButtonClick(city)
             }
         }
 
@@ -84,6 +87,7 @@ class MainActivity : BaseActivity(), MainContract.View, View.OnClickListener {
 
         fun setItem(cityList: List<City>) {
             this.cityList = cityList
+            notifyDataSetChanged()
         }
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

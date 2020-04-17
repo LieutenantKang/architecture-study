@@ -1,22 +1,19 @@
 package co.prography.architecturestudy.data.model
 
-import android.content.Context
+import android.app.Application
+import androidx.lifecycle.LiveData
 import co.prography.architecturestudy.data.response.CityResponse
 import co.prography.architecturestudy.data.retrofit.RetrofitGenerator
+import co.prography.architecturestudy.data.room.City
 import co.prography.architecturestudy.data.room.CityDao
 import co.prography.architecturestudy.data.room.CityDatabase
-import co.prography.architecturestudy.view.main.MainActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class MainModel(context: Context) {
-    private var database: CityDatabase = CityDatabase.getInstance(context)
-    private var cityDao: CityDao
-
-    init {
-        cityDao = database.cityDao
-    }
+class MainModel(application: Application) {
+    private var database: CityDatabase = CityDatabase.getInstance(application)
+    private var cityDao: CityDao = database.cityDao
 
     fun fetchData() {
         val call = RetrofitGenerator.create().getCities()
@@ -29,17 +26,8 @@ class MainModel(context: Context) {
         }))
     }
 
-    fun initRecyclerViewData(adapter: MainActivity.CityAdapter) {
-        val thread = Thread { adapter.setItem(cityDao.getCities()) }
-        thread.start()
-
-        try {
-            thread.join()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
-
-        adapter.notifyDataSetChanged()
+    fun getCities(): LiveData<List<City>> {
+        return cityDao.getCities()
     }
 
     fun updateFavorite(city: String, favorite: Int) {

@@ -1,36 +1,39 @@
 package co.prography.architecturestudy.view.favorite
 
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
 import co.prography.architecturestudy.R
-import co.prography.architecturestudy.base.BaseActivity
 import co.prography.architecturestudy.data.room.City
 import kotlinx.android.synthetic.main.card_favorite.view.*
 
-class FavoriteActivity : BaseActivity(), FavoriteContract.View {
-    override val layoutRes: Int
-        get() = R.layout.activity_favorite
-
-    override lateinit var presenter: FavoriteContract.Presenter
+class FavoriteActivity : AppCompatActivity() {
+    private lateinit var favoriteViewModel: FavoriteViewModel
 
     private val recyclerView by lazy {
         findViewById<RecyclerView>(R.id.favorite_recycler_view)
     }
 
-    override fun initView() {
-        presenter = FavoritePresenter(this@FavoriteActivity, this)
-        presenter.start()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_favorite)
 
-        val recyclerViewAdapter = CityAdapter()
-        recyclerView.adapter = recyclerViewAdapter
+        val adapter = CityAdapter()
 
-        presenter.initRecyclerViewData(recyclerViewAdapter)
+        recyclerView.adapter = adapter
+
+        favoriteViewModel = ViewModelProviders.of(this).get(FavoriteViewModel::class.java)
+        favoriteViewModel.getCities().observe(this, Observer<List<City>> { cities ->
+            adapter.setItem(cities)
+        })
     }
 
-    override fun isViewActive(): Boolean = checkActive()
 
     class CityAdapter : RecyclerView.Adapter<CityAdapter.ViewHolder>() {
         private var cityList = listOf<City>()
@@ -51,6 +54,7 @@ class FavoriteActivity : BaseActivity(), FavoriteContract.View {
 
         fun setItem(cityList: List<City>) {
             this.cityList = cityList
+            notifyDataSetChanged()
         }
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
