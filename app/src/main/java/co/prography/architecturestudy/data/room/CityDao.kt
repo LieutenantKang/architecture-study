@@ -5,11 +5,14 @@ import androidx.room.*
 @Dao
 interface CityDao {
     @Query("SELECT * FROM City")
+    fun getCities() : List<City>
+
+    @Query("SELECT * FROM City WHERE favorite = 'true'")
     fun getFavoriteCities() : List<City>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertFavoriteCity(city: City)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertCities(cities: List<City>?)
 
-    @Delete
-    fun deleteFavoriteCity(city: City)
+    @Query("UPDATE City SET favorite = :favorite WHERE city = :name")
+    fun updateFavoriteCity(name : String, favorite: Boolean)
 }
